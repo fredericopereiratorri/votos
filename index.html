@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Calor - Bairros de Olinda</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .info-panel h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .bairro-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+
+        .bairro-info h3 {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .bairro-info p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .legend h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            margin-right: 8px;
+            border: 1px solid #999;
+            border-radius: 3px;
+        }
+
+        .slider-control {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+
+        .slider-control label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .slider-control input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .slider-control .value-display {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="info-panel">
+        <h2>Mapa de Calor - Olinda</h2>
+        <p style="color: #666; font-size: 13px;">Votos de Eugênia Lima por bairro</p>
+
+        <div class="slider-control">
+            <label for="anoSelect">Selecione o Ano:</label>
+            <select id="anoSelect" style="width: 100%; padding: 8px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;">
+                <option value="2024">2024 - 7.110 votos</option>
+                <option value="2022">2022 - 5.948 votos</option>
+                <option value="2020">2020 - 2.876 votos</option>
+                <option value="2018">2018 - 13.767 votos</option>
+                <option value="2016">2016 - 2.087 votos</option>
+            </select>
+        </div>
+
+        <div class="slider-control">
+            <label for="intensitySlider">Intensidade do Mapa de Calor:</label>
+            <input type="range" id="intensitySlider" min="0" max="100" value="70">
+            <div class="value-display">
+                <span id="intensityValue">70</span>%
+            </div>
+        </div>
+
+        <div class="bairro-info" id="bairroInfo" style="display: none;">
+            <h3 id="bairroNome"></h3>
+            <p><strong>Votos:</strong> <span id="bairroValor"></span></p>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h4>Legenda de Votos</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #800026;"></div>
+            <span>Muito Alto (>800)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #BD0026;"></div>
+            <span>Alto (500-800)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #E31A1C;"></div>
+            <span>Médio-Alto (300-500)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #FC4E2A;"></div>
+            <span>Médio (150-300)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #FD8D3C;"></div>
+            <span>Médio-Baixo (50-150)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #FEB24C;"></div>
+            <span>Baixo (10-50)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #FED976;"></div>
+            <span>Muito Baixo (0-10)</span>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Dados eleitorais -->
+    <script src="dados_eleitorais.js"></script>
+
+    <!-- Script do mapa -->
+    <script src="mapa.js"></script>
+</body>
+</html>

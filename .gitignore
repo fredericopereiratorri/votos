@@ -1,0 +1,62 @@
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Backups do GeoJSON
+*.backup
+*.backup2
+bairros_olinda_completo_backup*.geojson
+
+# Arquivos de dados temporários
+bairros_encontrados*.json
+bairros_osm_raw.json
+todos_bairros_olinda*.json
+cidade_tabajara_osm.json
+bairros_faltantes.txt
+debug_output.txt
+
+# Scripts de análise/debug (manter apenas scripts principais)
+analisar_*.py
+buscar_*.py
+verificar_*.py
+identificar_*.py
+criar_*.py
+renomear_*.py
+remover_*.py
+adicionar_*.py
+debug_*.py
+listar_*.py
+
+# Converter Excel (manter só se necessário)
+convert_excel.py
+dados_votos.json
+
+# Ambientes virtuais
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
