@@ -19,30 +19,47 @@ git clone https://github.com/fredericopereiratorri/votos.git
 
 ### 3. Configurar aplicação web
 
-#### Opção A: Servir como arquivos estáticos (Recomendado - Mais simples)
+Vá em **"Web"** no menu do PythonAnywhere e configure sua aplicação existente:
 
-1. Vá em **"Web"** no menu do PythonAnywhere
-2. Se já tiver uma aplicação, clique em **"Add a new web app"**
-3. Escolha **"Manual configuration"**
-4. Escolha Python 3.10 (ou mais recente)
-5. Na seção **"Static files"**, adicione:
-   - **URL**: `/votos/`
-   - **Directory**: `/home/fredtorri/votos/`
+#### Configurações da aplicação (se já existir):
 
-6. Clique em **"Reload"** no topo da página
+**Code:**
+- What your site is running: (mantenha como está - provavelmente Flask ou Django)
+
+**Source code:**
+- Enter the path to your web app source code: `/home/fredtorri/` (mantenha como está)
+
+**Working directory:**
+- `/home/fredtorri/` (mantenha como está)
+
+**WSGI configuration file:**
+- `/var/www/fredtorri_pythonanywhere_com_wsgi.py` (mantenha como está)
+
+**Python version:**
+- `3.13` (ou a versão que você está usando)
+
+**Virtualenv:**
+- (deixe em branco se não estiver usando, ou mantenha o caminho existente)
+
+#### Adicionar arquivos estáticos (IMPORTANTE):
+
+Role até a seção **"Static files"** e adicione:
+
+| URL | Directory |
+|-----|-----------|
+| `/votos/` | `/home/fredtorri/votos/` |
+
+**Passos:**
+1. Clique em **"+ Add a new static file"** (ou edite uma entrada existente)
+2. Em **"URL"**, digite: `/votos/`
+3. Em **"Directory"**, digite: `/home/fredtorri/votos/`
+4. Clique no ✓ (check) para salvar
+
+#### Recarregar aplicação
+
+Clique no botão verde **"Reload fredtorri.pythonanywhere.com"** no topo da página
 
 Pronto! Acesse: https://fredtorri.pythonanywhere.com/votos/
-
-#### Opção B: Integrar com aplicação existente
-
-Se você já tem uma aplicação Flask/Django rodando:
-
-1. Vá em **"Web"** → Sua aplicação
-2. Na seção **"Static files"**, adicione:
-   - **URL**: `/votos/`
-   - **Directory**: `/home/fredtorri/votos/`
-
-3. Clique em **"Reload"**
 
 ### 4. Atualizações futuras
 
