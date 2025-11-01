@@ -3,299 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Calor - Bairros de Olinda</title>
-
-    <!-- Leaflet CSS -->
+    <title>Mapas Eleitorais - Eugênia Lima</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-        }
-
-        #map {
-            width: 100vw;
-            height: 100vh;
-        }
-
-        .info-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            max-width: 300px;
-        }
-
-        .info-panel h2 {
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 20px;
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .info-panel h2:hover {
-            color: #555;
-        }
-
-        .info-panel h2::after {
-            content: '▼';
-            font-size: 14px;
-            transition: transform 0.3s ease;
-        }
-
-        .info-panel h2.collapsed::after {
-            transform: rotate(-90deg);
-        }
-
-        .panel-content {
-            overflow: hidden;
-            transition: max-height 0.3s ease, opacity 0.3s ease;
-            max-height: 1000px;
-            opacity: 1;
-        }
-
-        .panel-content.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
-        .bairro-info {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 2px solid #eee;
-        }
-
-        .bairro-info h3 {
-            color: #555;
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-
-        .bairro-info p {
-            color: #666;
-            font-size: 14px;
-            margin: 5px 0;
-        }
-
-        .legend {
-            position: absolute;
-            bottom: 30px;
-            right: 10px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-
-        .legend h4 {
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 14px;
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .legend h4:hover {
-            color: #555;
-        }
-
-        .legend h4::after {
-            content: '▼';
-            font-size: 12px;
-            transition: transform 0.3s ease;
-        }
-
-        .legend h4.collapsed::after {
-            transform: rotate(-90deg);
-        }
-
-        .legend-content {
-            overflow: hidden;
-            transition: max-height 0.3s ease, opacity 0.3s ease;
-            max-height: 500px;
-            opacity: 1;
-        }
-
-        .legend-content.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin: 5px 0;
-            font-size: 12px;
-        }
-
-        .legend-color {
-            width: 30px;
-            height: 20px;
-            margin-right: 8px;
-            border: 1px solid #999;
-            border-radius: 3px;
-        }
-
-        .slider-control {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 2px solid #eee;
-        }
-
-        .slider-control label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .slider-control input[type="range"] {
-            width: 100%;
-            margin: 10px 0;
-        }
-
-        .slider-control .value-display {
-            text-align: center;
-            color: #666;
-            font-size: 13px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="map"></div>
 
+    <!-- Toggle entre mapas -->
+    <div class="map-toggle">
+        <button id="btnOlinda" class="active">Mapa Municipal (Olinda)</button>
+        <button id="btnPernambuco">Mapa Estadual (PE)</button>
+    </div>
+
+    <!-- Painel de informações -->
     <div class="info-panel">
-        <h2 id="infoPanelToggle">Mapa de Calor - Olinda</h2>
+        <h2 id="infoPanelToggle"><span id="mapTitle">Mapa de Calor - Olinda</span></h2>
         <div class="panel-content" id="infoPanelContent">
-            <p style="color: #666; font-size: 13px;">Votos de Eugênia Lima por bairro</p>
+            <p style="color: #666; font-size: 13px;" id="mapSubtitle">Votos de Eugênia Lima por bairro</p>
 
             <div class="slider-control">
                 <label>Selecione os Anos:</label>
-                <div style="margin: 10px 0;">
-                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                        <input type="checkbox" name="ano" value="2024" checked style="margin-right: 8px; cursor: pointer;">
-                        <span>2024 - 7.110 votos</span>
-                    </label>
-                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                        <input type="checkbox" name="ano" value="2022" style="margin-right: 8px; cursor: pointer;">
-                        <span>2022 - 5.948 votos</span>
-                    </label>
-                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                        <input type="checkbox" name="ano" value="2020" style="margin-right: 8px; cursor: pointer;">
-                        <span>2020 - 2.876 votos</span>
-                    </label>
-                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                        <input type="checkbox" name="ano" value="2018" style="margin-right: 8px; cursor: pointer;">
-                        <span>2018 - 13.767 votos</span>
-                    </label>
-                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                        <input type="checkbox" name="ano" value="2016" style="margin-right: 8px; cursor: pointer;">
-                        <span>2016 - 2.087 votos</span>
-                    </label>
-                </div>
-                <p style="color: #888; font-size: 11px; margin-top: 5px;">
-                    Média dos anos selecionados
-                </p>
+                <div id="yearCheckboxes" style="margin: 10px 0;"></div>
+                <p style="color: #888; font-size: 11px; margin-top: 5px;">Média dos anos selecionados</p>
             </div>
 
             <div class="slider-control">
                 <label for="intensitySlider">Intensidade do Mapa de Calor:</label>
                 <input type="range" id="intensitySlider" min="0" max="100" value="70">
-                <div class="value-display">
-                    <span id="intensityValue">70</span>%
-                </div>
+                <div class="value-display"><span id="intensityValue">70</span>%</div>
             </div>
 
-            <div class="bairro-info" id="bairroInfo" style="display: none;">
-                <h3 id="bairroNome"></h3>
-                <p><strong>Média de votos:</strong> <span id="bairroValor"></span></p>
+            <div class="area-info" id="areaInfo" style="display: none;">
+                <h3 id="areaNome"></h3>
+                <p><strong>Média de votos:</strong> <span id="areaValor"></span></p>
                 <p style="font-size: 12px; color: #888;"><span id="anosInfo"></span></p>
             </div>
         </div>
     </div>
 
+    <!-- Legenda -->
     <div class="legend">
         <h4 id="legendToggle">Legenda de Votos</h4>
         <div class="legend-content" id="legendContent">
-            <div class="legend-item">
-                <div class="legend-color" style="background: #800026;"></div>
-                <span>Muito Alto (>800)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #BD0026;"></div>
-                <span>Alto (500-800)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #E31A1C;"></div>
-                <span>Médio-Alto (300-500)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #FC4E2A;"></div>
-                <span>Médio (150-300)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #FD8D3C;"></div>
-                <span>Médio-Baixo (50-150)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #FEB24C;"></div>
-                <span>Baixo (10-50)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #FED976;"></div>
-                <span>Muito Baixo (0-10)</span>
-            </div>
+            <div class="legend-item"><div class="legend-color" style="background: #800026;"></div><span id="legend-very-high">Muito Alto (>800)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #BD0026;"></div><span id="legend-high">Alto (500-800)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #E31A1C;"></div><span id="legend-medium-high">Médio-Alto (300-500)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #FC4E2A;"></div><span id="legend-medium">Médio (150-300)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #FD8D3C;"></div><span id="legend-medium-low">Médio-Baixo (50-150)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #FEB24C;"></div><span id="legend-low">Baixo (10-50)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #FED976;"></div><span id="legend-very-low">Muito Baixo (0-10)</span></div>
         </div>
     </div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Dados eleitorais -->
-    <script src="dados_eleitorais.js"></script>
-
-    <!-- Script do mapa -->
+    <script src="dados_eleitorais_olinda.js"></script>
+    <script src="dados_eleitorais_pe.js"></script>
     <script src="mapa.js"></script>
-
-    <!-- Script para colapsar/expandir painéis -->
-    <script>
-        // Toggle para o painel de informações
-        const infoPanelToggle = document.getElementById('infoPanelToggle');
-        const infoPanelContent = document.getElementById('infoPanelContent');
-
-        infoPanelToggle.addEventListener('click', function() {
-            this.classList.toggle('collapsed');
-            infoPanelContent.classList.toggle('collapsed');
-        });
-
-        // Toggle para a legenda
-        const legendToggle = document.getElementById('legendToggle');
-        const legendContent = document.getElementById('legendContent');
-
-        legendToggle.addEventListener('click', function() {
-            this.classList.toggle('collapsed');
-            legendContent.classList.toggle('collapsed');
-        });
-    </script>
+    
 </body>
 </html>

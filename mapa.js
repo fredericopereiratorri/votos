@@ -1,226 +1,380 @@
-// Inicializa o mapa centrado em Olinda
-const map = L.map('map').setView([-8.0150, -34.8500], 13);
+// Configurações dos mapas
+console.log('=== INICIANDO MAPA.JS ===');
+console.log('dadosEleitorais disponível?', typeof dadosEleitorais !== 'undefined');
+console.log('dadosEleitoraisPE disponível?', typeof dadosEleitoraisPE !== 'undefined');
 
-// Adiciona o tile layer do OpenStreetMap
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 18
-}).addTo(map);
+if (typeof dadosEleitorais !== 'undefined') {
+    console.log('Olinda - Total de bairros:', Object.keys(dadosEleitorais).length);
+}
+if (typeof dadosEleitoraisPE !== 'undefined') {
+    console.log('PE - Total de municípios:', Object.keys(dadosEleitoraisPE).length);
+}
 
-// Variável global para armazenar as camadas dos bairros e os anos selecionados
-let bairrosLayer;
-let anosSelecionados = [2024]; // Array de anos selecionados
-let dadosGeoJSON;
+const MAPAS = {
+    olinda: {
+        nome: 'Olinda',
+        titulo: 'Mapa de Calor - Olinda',
+        subtitulo: 'Votos de Eugênia Lima por bairro',
+        geojson: 'bairros_olinda_filtrado.geojson',
+        dados: typeof dadosEleitorais !== 'undefined' ? dadosEleitorais : {},
+        anos: [
+            {ano: '2024', total: 7110},
+            {ano: '2022', total: 5948},
+            {ano: '2020', total: 2876},
+            {ano: '2018', total: 13767},
+            {ano: '2016', total: 2087}
+        ],
+        centro: [-8.0, -34.855],
+        zoom: 13,
+        legenda: {
+            muitoAlto: '>800',
+            alto: '500-800',
+            medioAlto: '300-500',
+            medio: '150-300',
+            medioBaixo: '50-150',
+            baixo: '10-50',
+            muitoBaixo: '0-10'
+        }
+    },
+    pernambuco: {
+        nome: 'Pernambuco',
+        titulo: 'Mapa de Calor - Pernambuco',
+        subtitulo: 'Votos de Eugênia Lima por município',
+        geojson: 'municipios_pe.geojson',
+        dados: typeof dadosEleitoraisPE !== 'undefined' ? dadosEleitoraisPE : {},
+        anos: [
+            {ano: '2018', total: 113681},
+            {ano: '2022', total: 45342}
+        ],
+        centro: [-8.3, -37.5],
+        zoom: 7,
+        legenda: {
+            muitoAlto: '>1000',
+            alto: '500-1000',
+            medioAlto: '250-500',
+            medio: '100-250',
+            medioBaixo: '50-100',
+            baixo: '10-50',
+            muitoBaixo: '0-10'
+        }
+    }
+};
 
-// Função para calcular média de votos de um bairro nos anos selecionados
-function calcularMediaVotos(nomeBairro) {
-    let somaVotos = 0;
-    let contador = 0;
+console.log('MAPAS configurado');
 
-    for (let ano of anosSelecionados) {
-        const votos = obterVotosBairro(nomeBairro, ano);
-        somaVotos += votos;
-        contador++;
+// Estado atual
+let mapaAtual = 'olinda';
+let map = null;
+let areaLayer = null;
+
+// Inicializar o mapa
+function inicializarMapa() {
+    console.log('inicializarMapa() chamada');
+    if (!map) {
+        map = L.map('map').setView(MAPAS[mapaAtual].centro, MAPAS[mapaAtual].zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+        console.log('Mapa Leaflet criado');
+    }
+}
+
+// Normalizar nomes
+function normalizarNome(nome) {
+    return nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+// Encontrar dados da área
+function encontrarDadosArea(nomeArea) {
+    const config = MAPAS[mapaAtual];
+    const nomeNormalizado = normalizarNome(nomeArea);
+
+    for (const [nome, dados] of Object.entries(config.dados)) {
+        if (normalizarNome(nome) === nomeNormalizado) {
+            return dados;
+        }
     }
 
-    return contador > 0 ? Math.round(somaVotos / contador) : 0;
+    for (const [nome, dados] of Object.entries(config.dados)) {
+        if (normalizarNome(nome).includes(nomeNormalizado) ||
+            nomeNormalizado.includes(normalizarNome(nome))) {
+            return dados;
+        }
+    }
+
+    return null;
 }
 
-// Função para obter cor baseada no número de votos (mapa de calor)
+// Calcular média de votos
+function calcularMediaVotos(dadosArea) {
+    const checkboxes = document.querySelectorAll('input[name="ano"]:checked');
+    const anosSelecionados = Array.from(checkboxes).map(cb => cb.value);
+
+    if (anosSelecionados.length === 0 || !dadosArea) {
+        return 0;
+    }
+
+    let soma = 0;
+    let count = 0;
+
+    anosSelecionados.forEach(ano => {
+        if (dadosArea[ano] !== undefined) {
+            soma += dadosArea[ano];
+            count++;
+        }
+    });
+
+    return count > 0 ? Math.round(soma / count) : 0;
+}
+
+// Obter cor baseada nos votos
 function getColor(votos) {
-    return votos > 800 ? '#800026' :
-           votos > 500 ? '#BD0026' :
-           votos > 300 ? '#E31A1C' :
-           votos > 150 ? '#FC4E2A' :
-           votos > 50  ? '#FD8D3C' :
-           votos > 10  ? '#FEB24C' :
-                         '#FED976';
+    const limites = mapaAtual === 'olinda'
+        ? {l1: 800, l2: 500, l3: 300, l4: 150, l5: 50, l6: 10}
+        : {l1: 1000, l2: 500, l3: 250, l4: 100, l5: 50, l6: 10};
+
+    return votos > limites.l1 ? '#800026' :
+           votos > limites.l2 ? '#BD0026' :
+           votos > limites.l3 ? '#E31A1C' :
+           votos > limites.l4 ? '#FC4E2A' :
+           votos > limites.l5 ? '#FD8D3C' :
+           votos > limites.l6 ? '#FEB24C' :
+           votos > 0           ? '#FED976' :
+                                 '#FFEDA0';
 }
 
-// Função para estilizar cada bairro
-function style(feature, opacity = 0.7) {
-    const nomeBairro = feature.properties.nome;
-    const mediaVotos = calcularMediaVotos(nomeBairro);
+// Estilizar área
+function style(feature) {
+    const nomeArea = feature.properties.name || feature.properties.nome;
+    const dadosArea = encontrarDadosArea(nomeArea);
+    const mediaVotos = calcularMediaVotos(dadosArea);
+
+    const intensitySlider = document.getElementById('intensitySlider');
+    const opacity = intensitySlider ? intensitySlider.value / 100 : 0.7;
+
+    if (!dadosArea || mediaVotos === 0) {
+        return {
+            fillColor: '#f0f0f0',
+            weight: 1,
+            opacity: 0.5,
+            color: '#999',
+            fillOpacity: 0.3
+        };
+    }
 
     return {
         fillColor: getColor(mediaVotos),
-        weight: 2,
+        weight: 1.5,
         opacity: 1,
         color: 'white',
-        dashArray: '3',
         fillOpacity: opacity
     };
 }
 
-// Função para destacar bairro ao passar o mouse
+// Destacar área ao passar mouse
 function highlightFeature(e) {
     const layer = e.target;
-
     layer.setStyle({
-        weight: 5,
-        color: '#666',
-        dashArray: '',
+        weight: 3,
+        color: '#333',
         fillOpacity: 0.9
     });
-
     layer.bringToFront();
 }
 
-// Função para resetar estilo ao tirar o mouse
+// Resetar destaque
 function resetHighlight(e) {
-    bairrosLayer.resetStyle(e.target);
+    areaLayer.resetStyle(e.target);
 }
 
-// Função para zoom ao clicar
-function zoomToFeature(e) {
-    map.fitBounds(e.target.getBounds());
+// Mostrar informações da área
+function mostrarInfoArea(nomeArea, mediaVotos) {
+    const checkboxes = document.querySelectorAll('input[name="ano"]:checked');
+    const anosSelecionados = Array.from(checkboxes).map(cb => cb.value);
 
-    // Atualiza painel de informações
-    const props = e.target.feature.properties;
-    const mediaVotos = calcularMediaVotos(props.nome);
+    document.getElementById('areaNome').textContent = nomeArea;
+    document.getElementById('areaValor').textContent = mediaVotos.toLocaleString('pt-BR');
 
-    // Criar texto com detalhes dos anos
-    let detalhesAnos = '';
-    if (anosSelecionados.length > 1) {
+    const dadosArea = encontrarDadosArea(nomeArea);
+    if (dadosArea && anosSelecionados.length > 0) {
         const detalhes = anosSelecionados.map(ano => {
-            const votos = obterVotosBairro(props.nome, ano);
-            return `${ano}: ${votos.toLocaleString('pt-BR')}`;
-        });
-        detalhesAnos = detalhes.join(' | ');
-    } else {
-        detalhesAnos = `Ano: ${anosSelecionados[0]}`;
+            const valor = dadosArea[ano] || 0;
+            return `${ano}: ${valor.toLocaleString('pt-BR')} votos`;
+        }).join(' | ');
+        document.getElementById('anosInfo').textContent = detalhes;
     }
 
-    document.getElementById('bairroInfo').style.display = 'block';
-    document.getElementById('bairroNome').textContent = props.nome;
-    document.getElementById('bairroValor').textContent = mediaVotos.toLocaleString('pt-BR') + ' votos';
-    document.getElementById('anosInfo').textContent = detalhesAnos;
+    document.getElementById('areaInfo').style.display = 'block';
 }
 
-// Função para adicionar eventos a cada feature
+// Clicar na área
+function clickFeature(e) {
+    const nomeArea = e.target.feature.properties.name || e.target.feature.properties.nome;
+    const dadosArea = encontrarDadosArea(nomeArea);
+    const mediaVotos = calcularMediaVotos(dadosArea);
+    mostrarInfoArea(nomeArea, mediaVotos);
+}
+
+// Adicionar eventos às features
 function onEachFeature(feature, layer) {
+    const nomeArea = feature.properties.name || feature.properties.nome;
+    const dadosArea = encontrarDadosArea(nomeArea);
+    const mediaVotos = calcularMediaVotos(dadosArea);
+
+    const textoTooltip = mediaVotos > 0
+        ? `<strong>${nomeArea}</strong><br>Votos: ${mediaVotos.toLocaleString('pt-BR')}`
+        : `<strong>${nomeArea}</strong><br>Sem dados`;
+
+    layer.bindTooltip(textoTooltip, {
+        permanent: false,
+        direction: 'auto'
+    });
+
     layer.on({
         mouseover: highlightFeature,
         mouseout: resetHighlight,
-        click: zoomToFeature
-    });
-
-    // Atualiza tooltip com média de votos
-    const nomeBairro = feature.properties.nome;
-    const mediaVotos = calcularMediaVotos(nomeBairro);
-    const tooltipText = `${nomeBairro}\nMédia: ${mediaVotos} votos`;
-
-    // Debug: log cada bairro sendo adicionado
-    console.log(`Adicionando bairro: '${nomeBairro}' com média ${mediaVotos} votos (anos: ${anosSelecionados.join(', ')})`);
-
-    layer.bindTooltip(tooltipText, {
-        permanent: false,
-        direction: 'center',
-        className: 'bairro-label'
+        click: clickFeature
     });
 }
 
-// Função para atualizar o mapa com dados dos anos selecionados
+// Atualizar checkboxes de ano
+function atualizarCheckboxesAnos() {
+    console.log('atualizarCheckboxesAnos() - mapa:', mapaAtual);
+    const config = MAPAS[mapaAtual];
+    const container = document.getElementById('yearCheckboxes');
+    container.innerHTML = '';
+
+    config.anos.forEach((item, index) => {
+        const label = document.createElement('label');
+        label.style.cssText = 'display: block; padding: 5px 0; cursor: pointer; user-select: none;';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'ano';
+        checkbox.value = item.ano;
+        checkbox.style.cssText = 'margin-right: 8px; cursor: pointer;';
+        if (index === 0) checkbox.checked = true;
+        checkbox.addEventListener('change', atualizarMapa);
+
+        const span = document.createElement('span');
+        span.textContent = `${item.ano} - ${item.total.toLocaleString('pt-BR')} votos`;
+
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        container.appendChild(label);
+    });
+    console.log('Checkboxes criados:', config.anos.length);
+}
+
+// Atualizar legenda
+function atualizarLegenda() {
+    console.log('atualizarLegenda() - mapa:', mapaAtual);
+    const config = MAPAS[mapaAtual];
+    document.getElementById('legend-very-high').textContent = `Muito Alto (${config.legenda.muitoAlto})`;
+    document.getElementById('legend-high').textContent = `Alto (${config.legenda.alto})`;
+    document.getElementById('legend-medium-high').textContent = `Médio-Alto (${config.legenda.medioAlto})`;
+    document.getElementById('legend-medium').textContent = `Médio (${config.legenda.medio})`;
+    document.getElementById('legend-medium-low').textContent = `Médio-Baixo (${config.legenda.medioBaixo})`;
+    document.getElementById('legend-low').textContent = `Baixo (${config.legenda.baixo})`;
+    document.getElementById('legend-very-low').textContent = `Muito Baixo (${config.legenda.muitoBaixo})`;
+}
+
+// Atualizar mapa
 function atualizarMapa() {
-    if (bairrosLayer && dadosGeoJSON) {
-        // Remove a camada antiga
-        map.removeLayer(bairrosLayer);
-
-        // Recria a camada com os novos dados (filtrando os que têm média 0)
-        const opacidadeAtual = document.getElementById('intensitySlider').value / 100;
-
-        bairrosLayer = L.geoJSON(dadosGeoJSON, {
-            filter: (feature) => {
-                const nomeBairro = feature.properties.nome;
-                const mediaVotos = calcularMediaVotos(nomeBairro);
-                return mediaVotos > 0; // Só desenha se a média for > 0
-            },
-            style: (feature) => style(feature, opacidadeAtual),
-            onEachFeature: onEachFeature
-        }).addTo(map);
-
-        console.log(`Mapa atualizado para os anos: ${anosSelecionados.join(', ')}`);
+    console.log('atualizarMapa() chamada - mapa:', mapaAtual);
+    if (areaLayer) {
+        map.removeLayer(areaLayer);
     }
+
+    const config = MAPAS[mapaAtual];
+    console.log('Carregando GeoJSON:', config.geojson);
+
+    fetch(config.geojson)
+        .then(response => {
+            console.log('GeoJSON resposta:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('GeoJSON carregado, features:', data.features.length);
+            areaLayer = L.geoJSON(data, {
+                style: style,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+
+            map.setView(config.centro, config.zoom);
+            setTimeout(() => {
+                map.fitBounds(areaLayer.getBounds());
+            }, 100);
+            console.log('Mapa atualizado com sucesso');
+        })
+        .catch(error => {
+            console.error('ERRO ao carregar GeoJSON:', error);
+            alert(`Erro ao carregar dados de ${config.nome}. Verifique o console.`);
+        });
 }
 
-// Carrega o GeoJSON dos bairros
-console.log('Carregando dados dos bairros de Olinda...');
+// Trocar de mapa
+function trocarMapa(novoMapa) {
+    console.log('trocarMapa() chamada:', novoMapa);
+    if (mapaAtual === novoMapa) {
+        console.log('Mesmo mapa, ignorando');
+        return;
+    }
 
-fetch('bairros_olinda_completo.geojson')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Erro ao carregar o arquivo GeoJSON');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(`${data.features.length} bairros carregados com sucesso!`);
+    mapaAtual = novoMapa;
+    const config = MAPAS[mapaAtual];
 
-        // Armazena os dados GeoJSON
-        dadosGeoJSON = data;
+    document.getElementById('mapTitle').textContent = config.titulo;
+    document.getElementById('mapSubtitle').textContent = config.subtitulo;
+    document.getElementById('areaInfo').style.display = 'none';
 
-        // Lista os bairros
-        const nomesBairros = data.features.map(f => f.properties.nome).sort();
-        console.log('Bairros:', nomesBairros);
+    atualizarCheckboxesAnos();
+    atualizarLegenda();
+    atualizarMapa();
+}
 
-        // Adiciona os bairros ao mapa (filtrando os que têm média 0)
-        const opacidadeInicial = document.getElementById('intensitySlider').value / 100;
-        bairrosLayer = L.geoJSON(data, {
-            filter: (feature) => {
-                const nomeBairro = feature.properties.nome;
-                const mediaVotos = calcularMediaVotos(nomeBairro);
-                return mediaVotos > 0; // Só desenha se a média for > 0
-            },
-            style: (feature) => style(feature, opacidadeInicial),
-            onEachFeature: onEachFeature
-        }).addTo(map);
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Inicializando aplicação');
+    inicializarMapa();
+    atualizarCheckboxesAnos();
+    atualizarLegenda();
+    atualizarMapa();
 
-        // Ajusta o zoom para mostrar todos os bairros
-        const bounds = bairrosLayer.getBounds();
-        map.fitBounds(bounds);
-
-        console.log('Mapa de Calor de Olinda carregado com sucesso!');
-    })
-    .catch(error => {
-        console.error('Erro ao carregar os dados dos bairros:', error);
-        alert('Erro ao carregar os dados dos bairros. Verifique se o arquivo bairros_olinda_completo.geojson está no mesmo diretório.');
-    });
-
-// Controle do seletor de anos (checkboxes)
-const anoCheckboxes = document.querySelectorAll('input[name="ano"]');
-
-// Adicionar event listener a cada checkbox
-anoCheckboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-        // Pegar todos os anos marcados
-        const checkedBoxes = document.querySelectorAll('input[name="ano"]:checked');
-        anosSelecionados = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-
-        // Se nenhum ano estiver selecionado, usar 2024 como padrão
-        if (anosSelecionados.length === 0) {
-            anosSelecionados = [2024];
-            document.querySelector('input[name="ano"][value="2024"]').checked = true;
-        }
-
-        console.log(`Anos selecionados: ${anosSelecionados.join(', ')}`);
+    // Slider de intensidade
+    const intensitySlider = document.getElementById('intensitySlider');
+    const intensityValue = document.getElementById('intensityValue');
+    intensitySlider.addEventListener('input', function() {
+        intensityValue.textContent = this.value;
         atualizarMapa();
     });
-});
 
-// Controle de intensidade
-const slider = document.getElementById('intensitySlider');
-const valueDisplay = document.getElementById('intensityValue');
+    // Toggle de painéis
+    document.getElementById('infoPanelToggle').addEventListener('click', function() {
+        this.classList.toggle('collapsed');
+        document.getElementById('infoPanelContent').classList.toggle('collapsed');
+    });
 
-slider.addEventListener('input', function() {
-    const opacity = this.value / 100;
-    valueDisplay.textContent = this.value;
+    document.getElementById('legendToggle').addEventListener('click', function() {
+        this.classList.toggle('collapsed');
+        document.getElementById('legendContent').classList.toggle('collapsed');
+    });
 
-    // Atualiza a opacidade de todas as camadas
-    if (bairrosLayer) {
-        bairrosLayer.eachLayer(function(layer) {
-            layer.setStyle({
-                fillOpacity: opacity
-            });
-        });
-    }
+    // Botões de toggle de mapa
+    document.getElementById('btnOlinda').addEventListener('click', function() {
+        console.log('Botão Olinda clicado');
+        document.getElementById('btnOlinda').classList.add('active');
+        document.getElementById('btnPernambuco').classList.remove('active');
+        trocarMapa('olinda');
+    });
+
+    document.getElementById('btnPernambuco').addEventListener('click', function() {
+        console.log('Botão Pernambuco clicado');
+        document.getElementById('btnPernambuco').classList.add('active');
+        document.getElementById('btnOlinda').classList.remove('active');
+        trocarMapa('pernambuco');
+    });
+
+    console.log('=== APLICAÇÃO INICIALIZADA ===');
 });

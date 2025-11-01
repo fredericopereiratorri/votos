@@ -1,0 +1,205 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+}
+
+#map {
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Toggle de Mapa */
+.map-toggle {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1001;
+    display: flex;
+    gap: 10px;
+}
+
+.map-toggle button {
+    padding: 8px 20px;
+    border: 2px solid #333;
+    background: white;
+    color: #333;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.map-toggle button:hover {
+    background: #f0f0f0;
+}
+
+.map-toggle button.active {
+    background: #333;
+    color: white;
+}
+
+.info-panel {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.info-panel h2 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 20px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-panel h2:hover {
+    color: #555;
+}
+
+.info-panel h2::after {
+    content: '▼';
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.info-panel h2.collapsed::after {
+    transform: rotate(-90deg);
+}
+
+.panel-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 1000px;
+    opacity: 1;
+}
+
+.panel-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+.area-info {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #eee;
+}
+
+.area-info h3 {
+    color: #555;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.area-info p {
+    color: #666;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.legend {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+.legend h4 {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.legend h4:hover {
+    color: #555;
+}
+
+.legend h4::after {
+    content: '▼';
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.legend h4.collapsed::after {
+    transform: rotate(-90deg);
+}
+
+.legend-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 500px;
+    opacity: 1;
+}
+
+.legend-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    font-size: 12px;
+}
+
+.legend-color {
+    width: 30px;
+    height: 20px;
+    margin-right: 8px;
+    border: 1px solid #999;
+    border-radius: 3px;
+}
+
+.slider-control {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #eee;
+}
+
+.slider-control label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.slider-control input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.slider-control .value-display {
+    text-align: center;
+    color: #666;
+    font-size: 13px;
+}
