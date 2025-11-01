@@ -7,10 +7,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18
 }).addTo(map);
 
-// Variável global para armazenar as camadas dos bairros e o ano selecionado
+// Variável global para armazenar as camadas dos bairros e os anos selecionados
 let bairrosLayer;
-let anoSelecionado = 2024;
+let anosSelecionados = [2024]; // Array de anos selecionados
 let dadosGeoJSON;
+
+// Função para calcular média de votos de um bairro nos anos selecionados
+function calcularMediaVotos(nomeBairro) {
+    let somaVotos = 0;
+    let contador = 0;
+
+    for (let ano of anosSelecionados) {
+        const votos = obterVotosBairro(nomeBairro, ano);
+        somaVotos += votos;
+        contador++;
+    }
+
+    return contador > 0 ? Math.round(somaVotos / contador) : 0;
+}
 
 // Função para obter cor baseada no número de votos (mapa de calor)
 function getColor(votos) {
@@ -26,10 +40,10 @@ function getColor(votos) {
 // Função para estilizar cada bairro
 function style(feature, opacity = 0.7) {
     const nomeBairro = feature.properties.nome;
-    const votos = obterVotosBairro(nomeBairro, anoSelecionado);
+    const mediaVotos = calcularMediaVotos(nomeBairro);
 
     return {
-        fillColor: getColor(votos),
+        fillColor: getColor(mediaVotos),
         weight: 2,
         opacity: 1,
         color: 'white',
@@ -63,11 +77,24 @@ function zoomToFeature(e) {
 
     // Atualiza painel de informações
     const props = e.target.feature.properties;
-    const votos = obterVotosBairro(props.nome, anoSelecionado);
+    const mediaVotos = calcularMediaVotos(props.nome);
+
+    // Criar texto com detalhes dos anos
+    let detalhesAnos = '';
+    if (anosSelecionados.length > 1) {
+        const detalhes = anosSelecionados.map(ano => {
+            const votos = obterVotosBairro(props.nome, ano);
+            return `${ano}: ${votos.toLocaleString('pt-BR')}`;
+        });
+        detalhesAnos = detalhes.join(' | ');
+    } else {
+        detalhesAnos = `Ano: ${anosSelecionados[0]}`;
+    }
 
     document.getElementById('bairroInfo').style.display = 'block';
     document.getElementById('bairroNome').textContent = props.nome;
-    document.getElementById('bairroValor').textContent = votos.toLocaleString('pt-BR') + ' votos';
+    document.getElementById('bairroValor').textContent = mediaVotos.toLocaleString('pt-BR') + ' votos';
+    document.getElementById('anosInfo').textContent = detalhesAnos;
 }
 
 // Função para adicionar eventos a cada feature
@@ -78,13 +105,13 @@ function onEachFeature(feature, layer) {
         click: zoomToFeature
     });
 
-    // Atualiza tooltip com número de votos
+    // Atualiza tooltip com média de votos
     const nomeBairro = feature.properties.nome;
-    const votos = obterVotosBairro(nomeBairro, anoSelecionado);
-    const tooltipText = `${nomeBairro}\n${votos} votos`;
+    const mediaVotos = calcularMediaVotos(nomeBairro);
+    const tooltipText = `${nomeBairro}\nMédia: ${mediaVotos} votos`;
 
     // Debug: log cada bairro sendo adicionado
-    console.log(`Adicionando bairro: '${nomeBairro}' com ${votos} votos (ano ${anoSelecionado})`);
+    console.log(`Adicionando bairro: '${nomeBairro}' com média ${mediaVotos} votos (anos: ${anosSelecionados.join(', ')})`);
 
     layer.bindTooltip(tooltipText, {
         permanent: false,
@@ -93,26 +120,26 @@ function onEachFeature(feature, layer) {
     });
 }
 
-// Função para atualizar o mapa com dados do ano selecionado
+// Função para atualizar o mapa com dados dos anos selecionados
 function atualizarMapa() {
     if (bairrosLayer && dadosGeoJSON) {
         // Remove a camada antiga
         map.removeLayer(bairrosLayer);
 
-        // Recria a camada com os novos dados (filtrando os que têm 0 votos)
+        // Recria a camada com os novos dados (filtrando os que têm média 0)
         const opacidadeAtual = document.getElementById('intensitySlider').value / 100;
 
         bairrosLayer = L.geoJSON(dadosGeoJSON, {
             filter: (feature) => {
                 const nomeBairro = feature.properties.nome;
-                const votos = obterVotosBairro(nomeBairro, anoSelecionado);
-                return votos > 0; // Só desenha se tiver votos
+                const mediaVotos = calcularMediaVotos(nomeBairro);
+                return mediaVotos > 0; // Só desenha se a média for > 0
             },
             style: (feature) => style(feature, opacidadeAtual),
             onEachFeature: onEachFeature
         }).addTo(map);
 
-        console.log(`Mapa atualizado para o ano ${anoSelecionado}`);
+        console.log(`Mapa atualizado para os anos: ${anosSelecionados.join(', ')}`);
     }
 }
 
@@ -136,13 +163,13 @@ fetch('bairros_olinda_completo.geojson')
         const nomesBairros = data.features.map(f => f.properties.nome).sort();
         console.log('Bairros:', nomesBairros);
 
-        // Adiciona os bairros ao mapa (filtrando os que têm 0 votos)
+        // Adiciona os bairros ao mapa (filtrando os que têm média 0)
         const opacidadeInicial = document.getElementById('intensitySlider').value / 100;
         bairrosLayer = L.geoJSON(data, {
             filter: (feature) => {
                 const nomeBairro = feature.properties.nome;
-                const votos = obterVotosBairro(nomeBairro, anoSelecionado);
-                return votos > 0; // Só desenha se tiver votos
+                const mediaVotos = calcularMediaVotos(nomeBairro);
+                return mediaVotos > 0; // Só desenha se a média for > 0
             },
             style: (feature) => style(feature, opacidadeInicial),
             onEachFeature: onEachFeature
@@ -159,12 +186,25 @@ fetch('bairros_olinda_completo.geojson')
         alert('Erro ao carregar os dados dos bairros. Verifique se o arquivo bairros_olinda_completo.geojson está no mesmo diretório.');
     });
 
-// Controle do seletor de ano
-const anoSelect = document.getElementById('anoSelect');
-anoSelect.addEventListener('change', function() {
-    anoSelecionado = parseInt(this.value);
-    console.log(`Ano alterado para: ${anoSelecionado}`);
-    atualizarMapa();
+// Controle do seletor de anos (checkboxes)
+const anoCheckboxes = document.querySelectorAll('input[name="ano"]');
+
+// Adicionar event listener a cada checkbox
+anoCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        // Pegar todos os anos marcados
+        const checkedBoxes = document.querySelectorAll('input[name="ano"]:checked');
+        anosSelecionados = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+
+        // Se nenhum ano estiver selecionado, usar 2024 como padrão
+        if (anosSelecionados.length === 0) {
+            anosSelecionados = [2024];
+            document.querySelector('input[name="ano"][value="2024"]').checked = true;
+        }
+
+        console.log(`Anos selecionados: ${anosSelecionados.join(', ')}`);
+        atualizarMapa();
+    });
 });
 
 // Controle de intensidade

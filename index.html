@@ -127,14 +127,32 @@
         <p style="color: #666; font-size: 13px;">Votos de Eugênia Lima por bairro</p>
 
         <div class="slider-control">
-            <label for="anoSelect">Selecione o Ano:</label>
-            <select id="anoSelect" style="width: 100%; padding: 8px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;">
-                <option value="2024">2024 - 7.110 votos</option>
-                <option value="2022">2022 - 5.948 votos</option>
-                <option value="2020">2020 - 2.876 votos</option>
-                <option value="2018">2018 - 13.767 votos</option>
-                <option value="2016">2016 - 2.087 votos</option>
-            </select>
+            <label>Selecione os Anos:</label>
+            <div style="margin: 10px 0;">
+                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                    <input type="checkbox" name="ano" value="2024" checked style="margin-right: 8px; cursor: pointer;">
+                    <span>2024 - 7.110 votos</span>
+                </label>
+                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                    <input type="checkbox" name="ano" value="2022" style="margin-right: 8px; cursor: pointer;">
+                    <span>2022 - 5.948 votos</span>
+                </label>
+                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                    <input type="checkbox" name="ano" value="2020" style="margin-right: 8px; cursor: pointer;">
+                    <span>2020 - 2.876 votos</span>
+                </label>
+                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                    <input type="checkbox" name="ano" value="2018" style="margin-right: 8px; cursor: pointer;">
+                    <span>2018 - 13.767 votos</span>
+                </label>
+                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                    <input type="checkbox" name="ano" value="2016" style="margin-right: 8px; cursor: pointer;">
+                    <span>2016 - 2.087 votos</span>
+                </label>
+            </div>
+            <p style="color: #888; font-size: 11px; margin-top: 5px;">
+                Média dos anos selecionados
+            </p>
         </div>
 
         <div class="slider-control">
@@ -147,7 +165,8 @@
 
         <div class="bairro-info" id="bairroInfo" style="display: none;">
             <h3 id="bairroNome"></h3>
-            <p><strong>Votos:</strong> <span id="bairroValor"></span></p>
+            <p><strong>Média de votos:</strong> <span id="bairroValor"></span></p>
+            <p style="font-size: 12px; color: #888;"><span id="anosInfo"></span></p>
         </div>
     </div>
 

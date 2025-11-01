@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start index.html)",
+      "Bash(dir:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "WebSearch",
+      "WebFetch(domain:gismaps.com.br)",
+      "WebFetch(domain:overpass-api.de)",
+      "Bash(start http://localhost:8000)",
+      "Bash(timeout 3 curl:*)",
+      "Bash(findstr:*)",
+      "Bash(debug_output.txt)",
+      "Bash(copy:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nImplementar sistema de mapa de calor eleitoral para Olinda\n\n- Mapa interativo com dados eleitorais de Eugênia Lima (2016-2024)\n- Seletor de ano para visualizar diferentes eleições\n- Mapa de calor com escala de cores baseada em número de votos\n- Filtragem dinâmica: bairros com 0 votos não são exibidos\n- Controle de intensidade/opacidade do mapa\n- 48 bairros de Olinda mapeados com geometrias do OpenStreetMap\n- Tooltips e painel de informações interativos\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git remote set-url:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
