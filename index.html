@@ -41,6 +41,37 @@
             margin-bottom: 15px;
             color: #333;
             font-size: 20px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-panel h2:hover {
+            color: #555;
+        }
+
+        .info-panel h2::after {
+            content: '▼';
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .info-panel h2.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .panel-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .panel-content.collapsed {
+            max-height: 0;
+            opacity: 0;
         }
 
         .bairro-info {
@@ -76,6 +107,37 @@
             margin-bottom: 10px;
             color: #333;
             font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .legend h4:hover {
+            color: #555;
+        }
+
+        .legend h4::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .legend h4.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .legend-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        .legend-content.collapsed {
+            max-height: 0;
+            opacity: 0;
         }
 
         .legend-item {
@@ -123,82 +185,86 @@
     <div id="map"></div>
 
     <div class="info-panel">
-        <h2>Mapa de Calor - Olinda</h2>
-        <p style="color: #666; font-size: 13px;">Votos de Eugênia Lima por bairro</p>
+        <h2 id="infoPanelToggle">Mapa de Calor - Olinda</h2>
+        <div class="panel-content" id="infoPanelContent">
+            <p style="color: #666; font-size: 13px;">Votos de Eugênia Lima por bairro</p>
 
-        <div class="slider-control">
-            <label>Selecione os Anos:</label>
-            <div style="margin: 10px 0;">
-                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                    <input type="checkbox" name="ano" value="2024" checked style="margin-right: 8px; cursor: pointer;">
-                    <span>2024 - 7.110 votos</span>
-                </label>
-                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                    <input type="checkbox" name="ano" value="2022" style="margin-right: 8px; cursor: pointer;">
-                    <span>2022 - 5.948 votos</span>
-                </label>
-                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                    <input type="checkbox" name="ano" value="2020" style="margin-right: 8px; cursor: pointer;">
-                    <span>2020 - 2.876 votos</span>
-                </label>
-                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                    <input type="checkbox" name="ano" value="2018" style="margin-right: 8px; cursor: pointer;">
-                    <span>2018 - 13.767 votos</span>
-                </label>
-                <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
-                    <input type="checkbox" name="ano" value="2016" style="margin-right: 8px; cursor: pointer;">
-                    <span>2016 - 2.087 votos</span>
-                </label>
+            <div class="slider-control">
+                <label>Selecione os Anos:</label>
+                <div style="margin: 10px 0;">
+                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                        <input type="checkbox" name="ano" value="2024" checked style="margin-right: 8px; cursor: pointer;">
+                        <span>2024 - 7.110 votos</span>
+                    </label>
+                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                        <input type="checkbox" name="ano" value="2022" style="margin-right: 8px; cursor: pointer;">
+                        <span>2022 - 5.948 votos</span>
+                    </label>
+                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                        <input type="checkbox" name="ano" value="2020" style="margin-right: 8px; cursor: pointer;">
+                        <span>2020 - 2.876 votos</span>
+                    </label>
+                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                        <input type="checkbox" name="ano" value="2018" style="margin-right: 8px; cursor: pointer;">
+                        <span>2018 - 13.767 votos</span>
+                    </label>
+                    <label style="display: block; padding: 5px 0; cursor: pointer; user-select: none;">
+                        <input type="checkbox" name="ano" value="2016" style="margin-right: 8px; cursor: pointer;">
+                        <span>2016 - 2.087 votos</span>
+                    </label>
+                </div>
+                <p style="color: #888; font-size: 11px; margin-top: 5px;">
+                    Média dos anos selecionados
+                </p>
             </div>
-            <p style="color: #888; font-size: 11px; margin-top: 5px;">
-                Média dos anos selecionados
-            </p>
-        </div>
 
-        <div class="slider-control">
-            <label for="intensitySlider">Intensidade do Mapa de Calor:</label>
-            <input type="range" id="intensitySlider" min="0" max="100" value="70">
-            <div class="value-display">
-                <span id="intensityValue">70</span>%
+            <div class="slider-control">
+                <label for="intensitySlider">Intensidade do Mapa de Calor:</label>
+                <input type="range" id="intensitySlider" min="0" max="100" value="70">
+                <div class="value-display">
+                    <span id="intensityValue">70</span>%
+                </div>
             </div>
-        </div>
 
-        <div class="bairro-info" id="bairroInfo" style="display: none;">
-            <h3 id="bairroNome"></h3>
-            <p><strong>Média de votos:</strong> <span id="bairroValor"></span></p>
-            <p style="font-size: 12px; color: #888;"><span id="anosInfo"></span></p>
+            <div class="bairro-info" id="bairroInfo" style="display: none;">
+                <h3 id="bairroNome"></h3>
+                <p><strong>Média de votos:</strong> <span id="bairroValor"></span></p>
+                <p style="font-size: 12px; color: #888;"><span id="anosInfo"></span></p>
+            </div>
         </div>
     </div>
 
     <div class="legend">
-        <h4>Legenda de Votos</h4>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #800026;"></div>
-            <span>Muito Alto (>800)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #BD0026;"></div>
-            <span>Alto (500-800)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #E31A1C;"></div>
-            <span>Médio-Alto (300-500)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #FC4E2A;"></div>
-            <span>Médio (150-300)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #FD8D3C;"></div>
-            <span>Médio-Baixo (50-150)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #FEB24C;"></div>
-            <span>Baixo (10-50)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #FED976;"></div>
-            <span>Muito Baixo (0-10)</span>
+        <h4 id="legendToggle">Legenda de Votos</h4>
+        <div class="legend-content" id="legendContent">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #800026;"></div>
+                <span>Muito Alto (>800)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #BD0026;"></div>
+                <span>Alto (500-800)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #E31A1C;"></div>
+                <span>Médio-Alto (300-500)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FC4E2A;"></div>
+                <span>Médio (150-300)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FD8D3C;"></div>
+                <span>Médio-Baixo (50-150)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FEB24C;"></div>
+                <span>Baixo (10-50)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FED976;"></div>
+                <span>Muito Baixo (0-10)</span>
+            </div>
         </div>
     </div>
 
@@ -210,5 +276,26 @@
 
     <!-- Script do mapa -->
     <script src="mapa.js"></script>
+
+    <!-- Script para colapsar/expandir painéis -->
+    <script>
+        // Toggle para o painel de informações
+        const infoPanelToggle = document.getElementById('infoPanelToggle');
+        const infoPanelContent = document.getElementById('infoPanelContent');
+
+        infoPanelToggle.addEventListener('click', function() {
+            this.classList.toggle('collapsed');
+            infoPanelContent.classList.toggle('collapsed');
+        });
+
+        // Toggle para a legenda
+        const legendToggle = document.getElementById('legendToggle');
+        const legendContent = document.getElementById('legendContent');
+
+        legendToggle.addEventListener('click', function() {
+            this.classList.toggle('collapsed');
+            legendContent.classList.toggle('collapsed');
+        });
+    </script>
 </body>
 </html>
