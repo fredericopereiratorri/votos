@@ -15,7 +15,7 @@ const MAPAS = {
         nome: 'Olinda',
         titulo: 'Mapa de Calor - Olinda',
         subtitulo: 'Votos de Eugênia Lima por bairro',
-        geojson: 'bairros_olinda_filtrado.geojson',
+        geojson: 'bairros_olinda_completo_novo.geojson',
         dados: typeof dadosEleitorais !== 'undefined' ? dadosEleitorais : {},
         anos: [
             {ano: '2024', total: 7110},
